@@ -1,0 +1,96 @@
+- name: printing vars from main playbook
+  debug:
+     msg: |
+          "{{ rarn }}"
+- name: "Switch Role "
+  sts_assume_role:
+     role_arn: "{{ rarn }}"
+     role_session_name: "iam-mod"
+     region: "us-east-1"
+     duration_seconds: "{{ 3600 if duration_in_seconds is not defined else duration_in_seconds }}"
+  register: assumed_role
+- name: Display creds
+  debug:
+     msg: "{{ assumed_role }}"
+- name: set access key, secrete key and Token from assumed role fact
+  set_fact:
+     access_key: "{{ assumed_role.sts_creds.access_key }}"
+     secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+     token: "{{ assumed_role.sts_creds.session_token }}"
+
+
+- iam_role_info:
+        #    name: example2
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  register: role_info
+
+  #- name: Display role info
+  #debug:
+  #   msg: "{{ role_info }}"
+
+- name: Display role info
+  debug:
+     msg: "{{ policyname.role_name }}"
+  when: '"AmazonSSMManagedInstanceCore" in policyname.managed_policies|map(attribute=''policy_name'')|list'
+  with_items:
+          - "{{ role_info.iam_roles }}"
+          #      - "{{ role_info.iam_roles[0].managed_policies|map(attribute='policy_name')|list }}"
+  loop_control:
+     loop_var: policyname
+- name: Modify IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "elb_read"
+    policy: "{{ lookup('file', 'policy_one_update.json') }}"
+    state: present
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  when: pname == "one"
+
+- name: Modify IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "iam_read"
+    policy: "{{ lookup('file', 'policy_two_update.json') }}"
+    state: present
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  when: pname == "two"
+
+- name: Modify IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "s3_read"
+    policy: "{{ lookup('file', 'policy_three_update.json') }}"
+    state: present
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  when: pname == "three"
+
+- name: Modify IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "ec2_read"
+    policy: "{{ lookup('file', 'policy_four_update.json') }}"
+    state: present
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  when: pname == "four"
+
+- name: Modify IAM Managed Policy
+  iam_managed_policy:
+    policy_name: "cft_read"
+    policy: "{{ lookup('file', 'policy_five_update.json') }}"
+    state: present
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ token }}"
+    aws_region: "{{ region }}"
+  when: pname == "five"
